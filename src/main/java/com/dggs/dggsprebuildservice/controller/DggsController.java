@@ -17,7 +17,7 @@ import java.io.IOException;
 @Api("控制器")
 @CrossOrigin("*")
 @RequestMapping("/Dggs")
-public class HelloWord {
+public class DggsController {
 
     @Resource
     DggsService dggsService;

@@ -1,4 +1,4 @@
-package com.dggs.dggsprebuildservice.controller.model;
+package com.dggs.dggsprebuildservice.model;
 
 import lombok.Data;
 

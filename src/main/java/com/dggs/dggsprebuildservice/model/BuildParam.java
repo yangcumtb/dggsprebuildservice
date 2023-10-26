@@ -1,2 +1,4 @@
-package com.dggs.dggsprebuildservice.model;public class BuildParam {
+package com.dggs.dggsprebuildservice.model;
+
+public class BuildParam {
 }

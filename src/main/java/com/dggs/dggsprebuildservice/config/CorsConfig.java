@@ -1,4 +1,4 @@
-package com.example.atlasgeopre.common.config;
+package com.dggs.dggsprebuildservice.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;

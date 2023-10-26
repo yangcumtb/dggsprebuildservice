@@ -1,2 +1,5 @@
-package com.dggs.dggsprebuildservice.model;public class SpatialData {
+package com.dggs.dggsprebuildservice.model;
+
+public class SpatialData {
+
 }
