@@ -1,9 +1,11 @@
+server:
+  port: 5001
 spring:
   datasource:
-    url: 'jdbc:postgresql://localhost:5432/yourdatabase'
-    username: 'yourusername'
-    password: 'yourpassword'
     driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/dggs_prebuild_db?currentSchema=public
+    username: postgres
+    password: 6666
   redis:
     host: 127.0.0.1
     port: 6379
@@ -13,10 +15,32 @@ spring:
         max-active: 8
         max-wait: -1
         max-idle: 8
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
   profiles:
     active: dev
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-server:
-  port: 5001
+
+#spring.jackson.date-format=yyyy-MM-dd HH:mm:ss
+mybatis-plus:
+  mapper-locations: classpath*:com/dggs/dggsprebuildservice/mapper/**/*Mapper.xml
+  # 流程设计器mapper修复 https://blog.csdn.net/xljx_1/article/details/105320252
+  configuration-properties:
+    prefix:
+    blobType: BLOB
+    boolValue: TRUE
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: true
+    lazy-loading-enabled: true
+    multiple-result-sets-enabled: true
+    #关闭日志 log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    #开启日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      table-underline: true
