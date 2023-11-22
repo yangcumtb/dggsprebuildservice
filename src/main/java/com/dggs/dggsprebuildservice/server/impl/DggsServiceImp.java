@@ -193,7 +193,7 @@ public class DggsServiceImp extends ServiceImpl<H3ChengNanjiedaoMapper, SpatialD
      * @throws IOException
      */
     @Override
-    public void preBuildPyh(BuildParam buildParam) {
+    public void preBuildPyh(BuildParam buildParam) throws IOException {
         CacheLoader.preloadTilesToCache(buildParam.getFilePath(), buildParam.getResolution());
     }
 

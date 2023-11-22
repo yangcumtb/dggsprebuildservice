@@ -8,13 +8,20 @@ import com.uber.h3core.util.LatLng;
 import io.swagger.models.auth.In;
 import org.gdal.gdal.gdal;
 import org.gdal.ogr.*;
+import org.geotools.data.shapefile.ShapefileDataStore;
+import org.geotools.feature.FeatureIterator;
+import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.feature.simple.SimpleFeatureType;
 
 import javax.annotation.PreDestroy;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class CacheLoader {
@@ -22,7 +29,6 @@ public class CacheLoader {
     public CacheLoader() throws IOException {
     }
 
-    private static H3Core h3;
 
     private static Cache<Long, VecterModel> cache = Caffeine.newBuilder()
             .maximumSize(50000000) // 设置缓存的最大大小
@@ -37,11 +43,14 @@ public class CacheLoader {
     /**
      * 预缓存前0-8级别数据
      */
-    public static void preloadTilesToCache(String cacheShpTilePath, int maxRes) {
+    public static void preloadTilesToCache(String cacheShpTilePath, int maxRes) throws IOException {
         for (int i = 0; i <= maxRes; i++) {
             List<Long> nowList = getShpMulitRes(cacheShpTilePath, i);
+            if (nowList == null) {
+                return;
+            }
             System.out.println("第" + i + "层级构建完成");
-            System.out.println("第" + i + "层级存储中...");
+            System.out.println("第" + i + "层级存储中...（共计" + nowList.size() + "个网格)");
             for (int j = 0; j < nowList.size(); j++) {
                 VecterModel vecterModel = new VecterModel();
                 cache.put(nowList.get(j), vecterModel);
@@ -53,61 +62,50 @@ public class CacheLoader {
     /**
      * 将shpfile转换成pointlist
      */
-    public static List<Long> getShpMulitRes(String path, int res) {
+    public static List<Long> getShpMulitRes(String path, int res) throws IOException {
         List<List<LatLng>> holes = new ArrayList<>();
         List<LatLng> points = new ArrayList<>();
 
-        gdal.AllRegister();
-        ogr.RegisterAll();
+        ShapefileDataStore dataStore = new ShapefileDataStore(new File(path).toURI().toURL());
+        dataStore.setCharset(Charset.forName("UTF-8"));
 
-        gdal.SetConfigOption("GDAL_FILENAME_IS_UTF8", "YES");
-//        属性表字段支持中文
-        gdal.SetConfigOption("SHAPE_ENCODING", "");
-//        读取数据
-        String strDriverName = "ESRI Shapefile";
-//        创建文件，根据strDriverName扩展名自动判断驱动类型
-        org.gdal.ogr.Driver oDriver = ogr.GetDriverByName(strDriverName);
-        if (oDriver == null) {
-            System.out.println(strDriverName + "驱动不可用！\n");
-            return null;
-        }
+        String typeName = dataStore.getTypeNames()[0];
+        SimpleFeatureType schema = dataStore.getSchema(typeName);
 
+        FeatureIterator<SimpleFeature> iterator = dataStore.getFeatureSource(typeName).getFeatures().features();
 
-        DataSource source = oDriver.Open(path);
-        if (source == null) {
-            System.out.println("无法打开文件");
-            return null;
-        }
-        Layer layer = source.GetLayerByIndex(0);
-        System.out.println(source.GetLayerCount());
-        Feature feature;
-        while ((feature = layer.GetNextFeature()) != null) {
-            Geometry geometry = feature.GetGeometryRef();
-            System.out.println(geometry.GetGeometryCount());
-            //便利每个面
-            for (int geoNum = 0; geoNum < geometry.GetGeometryCount(); geoNum++) {
-                Geometry polygon = geometry.GetGeometryRef(geoNum);
-                System.out.println(polygon.ExportToJson());
-                String geometryJson = polygon.ExportToJson();
-                double[][] boundaryPoints = polygon.GetBoundary().GetPoints();
+        try {
+            while (iterator.hasNext()) {
+                SimpleFeature feature = iterator.next();
 
+                // 获取几何对象
+                org.locationtech.jts.geom.Geometry geometry = (org.locationtech.jts.geom.Geometry) feature.getDefaultGeometry();
 
-                for (int i = 0; i < polygon.GetPointCount(); i++) {
-                    double[] point = geometry.GetPoint(i);
-                    if (polygon.IsRing()) {
-                        //如果封闭，不是孔洞
-                        points.add(new LatLng(point[1], point[0]));
+                // 检查几何类型，确保是多边形
+                if (geometry != null && geometry.getGeometryType().equalsIgnoreCase("MultiPolygon")) {
+                    // 处理 MultiPolygon
+                    for (int i = 0; i < geometry.getNumGeometries(); i++) {
+                        org.locationtech.jts.geom.Polygon polygon = (org.locationtech.jts.geom.Polygon) geometry.getGeometryN(i);
+                        // 获取 Polygon 的坐标点
+                        org.locationtech.jts.geom.Coordinate[] coordinates = polygon.getCoordinates();
+                        for (int j = 0; j < coordinates.length; j++) {
+                            double x = coordinates[j].getX();
+                            double y = coordinates[j].getY();
+                            points.add(new LatLng(y, x));
+                        }
                     }
                 }
             }
-            feature.delete();
+        } finally {
+            iterator.close();
+            dataStore.dispose();
         }
-        source.delete();
-        layer.delete();
-        System.out.println("第" + res + "层计算中...");
-        List<Long> result = h3.polygonToCells(points, holes, res);
-        System.out.println("第" + res + "层计算完成！");
-        return result;
+        if (points.size() != 0) {
+            H3Core h3 = H3Core.newInstance();
+            List<Long> result = h3.polygonToCells(points, null, res);
+            return result;
+        }
+        return null;
 
     }
 
