@@ -2,9 +2,11 @@ package com.dggs.dggsprebuildservice.controller;
 
 //import com.dggs.dggsprebuildservice.config.CustomDeSerializer;
 
+import com.dggs.dggsprebuildservice.config.CacheLoader;
 import com.dggs.dggsprebuildservice.model.*;
 import com.dggs.dggsprebuildservice.model.Hexagon.H3Request;
 import com.dggs.dggsprebuildservice.model.Hexagon.Hexagon;
+import com.dggs.dggsprebuildservice.model.Hexagon.VecterModel;
 import com.dggs.dggsprebuildservice.server.DggsService;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.uber.h3core.H3Core;
@@ -52,10 +54,24 @@ public class DggsController {
         return ResponseData.success(dggsService.getRgb(599852508923297791L));
     }
 
+    /**
+     * 栅格瓦片数据的构建
+     *
+     * @param buildParam 构建参数
+     * @return
+     * @throws IOException
+     */
     @PostMapping("/prebuild")
     @ApiOperation("预构建多分辨率网格")
     public ResponseData preBuild(@RequestBody BuildParam buildParam) throws IOException {
         dggsService.preBuild(buildParam);
+        return ResponseData.success();
+    }
+
+    @PostMapping("/prebuildPyh")
+    @ApiOperation("预构建多分辨率网格")
+    public ResponseData prebuildPyh(@RequestBody BuildParam buildParam) throws IOException {
+        dggsService.preBuildPyh(buildParam);
         return ResponseData.success();
     }
 
@@ -64,19 +80,37 @@ public class DggsController {
     public List<Hexagon> getRenderData(@RequestBody List<Hexagon> hexagonList) throws IOException {
         H3Core h3 = H3Core.newInstance();
 
-        hexagonList.stream().parallel().forEach(hexagon -> {
-            SpatialData cor = dggsService.getRgb(h3.stringToH3(hexagon.getCode()));
-            if (cor != null) {
+        hexagonList.forEach(hexagon -> {
+//            SpatialData cor = dggsService.getRgb(h3.stringToH3(hexagon.getCode()));
+//            if (cor != null) {
+//                List<Integer> colors = new ArrayList<>();
+//                colors.add(cor.getRed());
+//                colors.add(cor.getGreen());
+//                colors.add(cor.getBlue());
+//                colors.add(255);
+//                hexagon.setColor(colors);
+//            }
+            System.out.println(h3.stringToH3(hexagon.getCode()));
+
+        });
+        return hexagonList;
+    }
+
+    @PostMapping("/getShpArea")
+    @ApiOperation("获取渲染数据")
+    public List<Hexagon> getShpData(@RequestBody List<Hexagon> hexagonList) throws IOException {
+        H3Core h3 = H3Core.newInstance();
+
+        hexagonList.forEach(hexagon -> {
+            VecterModel vecterModel = CacheLoader.tryGetCacheTile(hexagon.getCode());
+            if (vecterModel != null) {
                 List<Integer> colors = new ArrayList<>();
-                colors.add(cor.getRed());
-                colors.add(cor.getGreen());
-                colors.add(cor.getBlue());
+                colors.add(0);
+                colors.add(0);
+                colors.add(0);
                 colors.add(255);
                 hexagon.setColor(colors);
-            } else {
-                hexagonList.remove(hexagon);
             }
-
         });
         return hexagonList;
     }

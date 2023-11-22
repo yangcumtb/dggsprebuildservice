@@ -15,6 +15,15 @@ public interface DggsService {
      */
     public void preBuild(BuildParam buildParam) throws IOException;
 
+
+    /**
+     * 空间数据多分辨率格网数据预构建
+     *
+     * @param buildParam 构建参数
+     */
+    public void preBuildPyh(BuildParam buildParam) throws IOException;
+
+
     SpatialData getRgb(Long code);
 
 }

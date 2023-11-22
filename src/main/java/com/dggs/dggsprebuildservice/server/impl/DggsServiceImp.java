@@ -1,6 +1,7 @@
 package com.dggs.dggsprebuildservice.server.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dggs.dggsprebuildservice.config.CacheLoader;
 import com.dggs.dggsprebuildservice.config.GDALInitializer;
 import com.dggs.dggsprebuildservice.mapper.H3ChengNanjiedaoMapper;
 import com.dggs.dggsprebuildservice.model.BuildParam;
@@ -184,5 +185,17 @@ public class DggsServiceImp extends ServiceImpl<H3ChengNanjiedaoMapper, SpatialD
     public SpatialData getRgb(Long code) {
         return this.getBaseMapper().selectById(code);
     }
+
+    /**
+     * 构建矢量
+     *
+     * @param buildParam 构建参数
+     * @throws IOException
+     */
+    @Override
+    public void preBuildPyh(BuildParam buildParam) {
+        CacheLoader.preloadTilesToCache(buildParam.getFilePath(), buildParam.getResolution());
+    }
+
 
 }
