@@ -4,23 +4,20 @@ package com.dggs.dggsprebuildservice.controller;
 
 import com.dggs.dggsprebuildservice.config.CacheLoader;
 import com.dggs.dggsprebuildservice.model.*;
-import com.dggs.dggsprebuildservice.model.Hexagon.H3Request;
 import com.dggs.dggsprebuildservice.model.Hexagon.Hexagon;
 import com.dggs.dggsprebuildservice.model.Hexagon.VecterModel;
 import com.dggs.dggsprebuildservice.server.DggsService;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.uber.h3core.H3Core;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.ibatis.annotations.Param;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @RestController
 @Api("控制器")
@@ -51,7 +48,7 @@ public class DggsController {
     @ApiOperation("获取h3编码")
     public ResponseData getCode(@Param("lat") double lat, @Param("lng") double lng, @Param("res") int res) throws IOException {
         H3Core h3 = H3Core.newInstance();
-        return ResponseData.success(dggsService.getRgb(599852508923297791L));
+        return ResponseData.success(h3.getResolution(635881305580465599L));
     }
 
     /**
@@ -81,15 +78,15 @@ public class DggsController {
         H3Core h3 = H3Core.newInstance();
 
         hexagonList.forEach(hexagon -> {
-//            SpatialData cor = dggsService.getRgb(h3.stringToH3(hexagon.getCode()));
-//            if (cor != null) {
-//                List<Integer> colors = new ArrayList<>();
-//                colors.add(cor.getRed());
-//                colors.add(cor.getGreen());
-//                colors.add(cor.getBlue());
-//                colors.add(255);
-//                hexagon.setColor(colors);
-//            }
+            SpatialData cor = dggsService.getRgb(h3.stringToH3(hexagon.getCode()));
+            if (cor != null) {
+                List<Integer> colors = new ArrayList<>();
+                colors.add(cor.getRed());
+                colors.add(cor.getGreen());
+                colors.add(cor.getBlue());
+                colors.add(255);
+                hexagon.setColor(colors);
+            }
             System.out.println(h3.stringToH3(hexagon.getCode()));
 
         });
@@ -102,18 +99,20 @@ public class DggsController {
         H3Core h3 = H3Core.newInstance();
 
         hexagonList.forEach(hexagon -> {
-            VecterModel vecterModel = CacheLoader.tryGetCacheTile(hexagon.getCode());
+            VecterModel vecterModel = CacheLoader.tryGetCacheTile(h3.stringToH3(hexagon.getCode()));
             if (vecterModel != null) {
                 List<Integer> colors = new ArrayList<>();
-                colors.add(0);
-                colors.add(0);
-                colors.add(0);
-                colors.add(255);
+                colors.add(159);
+                colors.add(187);
+                colors.add(115);
+                colors.add(180);
                 hexagon.setColor(colors);
             }
         });
         return hexagonList;
     }
+
+
 
 
 }

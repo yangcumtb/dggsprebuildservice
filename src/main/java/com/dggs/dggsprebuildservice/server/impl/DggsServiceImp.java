@@ -5,24 +5,23 @@ import com.dggs.dggsprebuildservice.config.CacheLoader;
 import com.dggs.dggsprebuildservice.config.GDALInitializer;
 import com.dggs.dggsprebuildservice.mapper.H3ChengNanjiedaoMapper;
 import com.dggs.dggsprebuildservice.model.BuildParam;
+import com.dggs.dggsprebuildservice.model.Hexagon.VecterModel;
 import com.dggs.dggsprebuildservice.model.SpatialData;
 import com.dggs.dggsprebuildservice.server.DggsService;
 import com.uber.h3core.H3Core;
 import com.uber.h3core.util.LatLng;
 import org.gdal.gdal.*;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.io.*;
 import java.util.*;
 
 @Service
 public class DggsServiceImp extends ServiceImpl<H3ChengNanjiedaoMapper, SpatialData> implements DggsService {
 
-//    @Resource
-//    private H3ChengNanjiedaoMapper h3ChengNanjiedao;
-
     private String cellResampleFile = "/Users/yang/Documents/javaproject/tifdata/cellResamplefile";
+
 
     /**
      * 预构建方法

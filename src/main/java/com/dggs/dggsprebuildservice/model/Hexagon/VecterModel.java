@@ -9,8 +9,4 @@ public class VecterModel {
      */
     private Long id = 0L;
 
-    /**
-     * 是否是陆地
-     */
-    private Boolean island;
 }

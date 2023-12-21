@@ -22,8 +22,14 @@ import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
+
+/**
+ * 本地缓存
+ *
+ */
 public class CacheLoader {
 
     public CacheLoader() throws IOException {
@@ -31,7 +37,7 @@ public class CacheLoader {
 
 
     private static Cache<Long, VecterModel> cache = Caffeine.newBuilder()
-            .maximumSize(50000000) // 设置缓存的最大大小
+            .maximumSize(10000000000L) // 设置缓存的最大大小
             .build();
 
 
@@ -45,17 +51,23 @@ public class CacheLoader {
      */
     public static void preloadTilesToCache(String cacheShpTilePath, int maxRes) throws IOException {
         for (int i = 0; i <= maxRes; i++) {
+            long buildstart = new Date().getTime();
             List<Long> nowList = getShpMulitRes(cacheShpTilePath, i);
             if (nowList == null) {
                 return;
             }
-            System.out.println("第" + i + "层级构建完成");
+            long buildend = new Date().getTime();
+
+            System.out.println("第" + i + "层级构建完成!用时" + (buildend - buildstart) + "毫秒");
+            long savaStart = new Date().getTime();
             System.out.println("第" + i + "层级存储中...（共计" + nowList.size() + "个网格)");
             for (int j = 0; j < nowList.size(); j++) {
                 VecterModel vecterModel = new VecterModel();
                 cache.put(nowList.get(j), vecterModel);
             }
-            System.out.println("第" + i + "层级存储完成！");
+            long saveEnd = new Date().getTime();
+
+            System.out.println("第" + i + "层级存储完成！用时" + (saveEnd - savaStart) + "毫秒");
         }
     }
 
@@ -100,6 +112,12 @@ public class CacheLoader {
             iterator.close();
             dataStore.dispose();
         }
+//        points.add(new LatLng(0.1, 0.5));
+//        points.add(new LatLng(0.2, 0.5));
+//        points.add(new LatLng(0.2, 0.6));
+//        points.add(new LatLng(0.1, 0.6));
+//        points.add(new LatLng(0.1, 0.5));
+
         if (points.size() != 0) {
             H3Core h3 = H3Core.newInstance();
             List<Long> result = h3.polygonToCells(points, null, res);
@@ -115,7 +133,7 @@ public class CacheLoader {
      * @param key 层级+列号+行号，字符串拼接
      * @return
      */
-    public static VecterModel tryGetCacheTile(String key) {
+    public static VecterModel tryGetCacheTile(Long key) {
         return cache.getIfPresent(key);
     }
 
