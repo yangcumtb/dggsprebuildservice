@@ -10,6 +10,7 @@ import com.dggs.dggsprebuildservice.server.DggsService;
 import com.uber.h3core.H3Core;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -93,26 +94,48 @@ public class DggsController {
         return hexagonList;
     }
 
+//    @PostMapping("/getShpArea")
+//    @ApiOperation("获取渲染数据")
+//    public List<Hexagon> getShpData(@RequestBody List<Hexagon> hexagonList) throws IOException {
+//        H3Core h3 = H3Core.newInstance();
+//
+//        hexagonList.forEach(hexagon -> {
+//            VecterModel vecterModel = CacheLoader.tryGetCacheTile(h3.stringToH3(hexagon.getCode()));
+//            if (vecterModel != null) {
+//                List<Integer> colors = new ArrayList<>();
+//                colors.add(159);
+//                colors.add(187);
+//                colors.add(115);
+//                colors.add(180);
+//                hexagon.setColor(colors);
+//            }
+//        });
+//        return hexagonList;
+//    }
+
     @PostMapping("/getShpArea")
     @ApiOperation("获取渲染数据")
-    public List<Hexagon> getShpData(@RequestBody List<Hexagon> hexagonList) throws IOException {
+    public List<String> getShpData(@RequestBody List<String> requestdata) throws IOException {
         H3Core h3 = H3Core.newInstance();
+        List<String> responseData = new ArrayList<>();
 
-        hexagonList.forEach(hexagon -> {
-            VecterModel vecterModel = CacheLoader.tryGetCacheTile(h3.stringToH3(hexagon.getCode()));
+        requestdata.forEach(hexagon -> {
+//            VecterModel vecterModel = CacheLoader.tryGetCacheTile(h3.stringToH3(hexagon));
+            VecterModel vecterModel = dggsService.tryGetCacheTile(h3.stringToH3(hexagon));
+
             if (vecterModel != null) {
-                List<Integer> colors = new ArrayList<>();
-                colors.add(159);
-                colors.add(187);
-                colors.add(115);
-                colors.add(180);
-                hexagon.setColor(colors);
+                responseData.add(hexagon);
             }
         });
-        return hexagonList;
+        return responseData;
     }
 
 
+    @Delete("/delete")
+    @ApiOperation("清除图层缓存")
+    public ResponseData clearCache(String layerId) {
+        return ResponseData.success();
+    }
 
 
 }

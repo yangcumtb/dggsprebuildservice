@@ -5,35 +5,25 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.uber.h3core.H3Core;
 import com.uber.h3core.util.LatLng;
-import io.swagger.models.auth.In;
-import org.gdal.gdal.gdal;
-import org.gdal.ogr.*;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import javax.annotation.PreDestroy;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 
 /**
  * 本地缓存
- *
  */
 public class CacheLoader {
-
-    public CacheLoader() throws IOException {
-    }
 
 
     private static Cache<Long, VecterModel> cache = Caffeine.newBuilder()
@@ -49,7 +39,7 @@ public class CacheLoader {
     /**
      * 预缓存前0-8级别数据
      */
-    public static void preloadTilesToCache(String cacheShpTilePath, int maxRes) throws IOException {
+    public static void preloadTilesToCache(String cacheShpTilePath, int maxRes, RedisTemplate<String, VecterModel> redisTemplate) throws IOException {
         for (int i = 0; i <= maxRes; i++) {
             long buildstart = new Date().getTime();
             List<Long> nowList = getShpMulitRes(cacheShpTilePath, i);
@@ -64,6 +54,7 @@ public class CacheLoader {
             for (int j = 0; j < nowList.size(); j++) {
                 VecterModel vecterModel = new VecterModel();
                 cache.put(nowList.get(j), vecterModel);
+                redisTemplate.opsForValue().set("L01" + String.valueOf(nowList.get(j)), vecterModel);
             }
             long saveEnd = new Date().getTime();
 

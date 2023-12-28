@@ -1,10 +1,14 @@
 package com.dggs.dggsprebuildservice.server;
 
 import com.dggs.dggsprebuildservice.model.BuildParam;
+import com.dggs.dggsprebuildservice.model.Camera;
+import com.dggs.dggsprebuildservice.model.Hexagon.Hexagon;
+import com.dggs.dggsprebuildservice.model.Hexagon.VecterModel;
 import com.dggs.dggsprebuildservice.model.SpatialData;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.List;
 
 public interface DggsService {
 
@@ -25,5 +29,17 @@ public interface DggsService {
 
 
     SpatialData getRgb(Long code);
+
+    /**
+     * 将摄像头网格化
+     *
+     * @param camera 摄像头
+     * @return 返回六边形网格
+     */
+    public List<Hexagon> cameraGrids(Camera camera);
+
+    VecterModel tryGetCacheTile(Long code);
+
+    void clearCache(String imageId);
 
 }

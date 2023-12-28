@@ -5,12 +5,15 @@ import com.dggs.dggsprebuildservice.config.CacheLoader;
 import com.dggs.dggsprebuildservice.config.GDALInitializer;
 import com.dggs.dggsprebuildservice.mapper.H3ChengNanjiedaoMapper;
 import com.dggs.dggsprebuildservice.model.BuildParam;
+import com.dggs.dggsprebuildservice.model.Camera;
+import com.dggs.dggsprebuildservice.model.Hexagon.Hexagon;
 import com.dggs.dggsprebuildservice.model.Hexagon.VecterModel;
 import com.dggs.dggsprebuildservice.model.SpatialData;
 import com.dggs.dggsprebuildservice.server.DggsService;
 import com.uber.h3core.H3Core;
 import com.uber.h3core.util.LatLng;
 import org.gdal.gdal.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +25,8 @@ public class DggsServiceImp extends ServiceImpl<H3ChengNanjiedaoMapper, SpatialD
 
     private String cellResampleFile = "/Users/yang/Documents/javaproject/tifdata/cellResamplefile";
 
+    @Autowired
+    private RedisTemplate<String, VecterModel> redisTemplate;
 
     /**
      * 预构建方法
@@ -193,8 +198,29 @@ public class DggsServiceImp extends ServiceImpl<H3ChengNanjiedaoMapper, SpatialD
      */
     @Override
     public void preBuildPyh(BuildParam buildParam) throws IOException {
-        CacheLoader.preloadTilesToCache(buildParam.getFilePath(), buildParam.getResolution());
+        CacheLoader.preloadTilesToCache(buildParam.getFilePath(), buildParam.getResolution(), redisTemplate);
     }
 
+
+    public VecterModel tryGetCacheTile(Long code) {
+        System.out.println(redisTemplate.opsForValue().get(String.valueOf(code)));
+        return redisTemplate.opsForValue().get("L01" + String.valueOf(code));
+    }
+
+    /**
+     * 将摄像头网格化
+     *
+     * @param camera 摄像头
+     * @return 六边形网格
+     */
+    @Override
+    public List<Hexagon> cameraGrids(Camera camera) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void clearCache(String imageId) {
+
+    }
 
 }
